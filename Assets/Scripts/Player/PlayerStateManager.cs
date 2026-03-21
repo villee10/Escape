@@ -13,6 +13,11 @@ public partial class PlayerStateManager : MonoBehaviour
     public Transform handTransform; 
     public GameObject currentlyHeldItem;
     
+    [Header("Dragging")]
+    private DraggableObject currentDraggable; // DraggableObject
+    private Vector3 dragOffset;
+    private float initialObjectY;
+    
     [Header("Interaktion")]
     public float interactionDistance = 2.5f; 
     public LayerMask interactableMask;       
@@ -81,6 +86,7 @@ public partial class PlayerStateManager : MonoBehaviour
 
         // 3. INTERAKTION (E-knappen)
         if (Input.GetKeyDown(KeyCode.E)) CheckInteraction();
+        if (Input.GetKeyUp(KeyCode.E)) StopDragging();
 
         // 4. ANIMATOR-SYNK (Gör att isCrouching blir true när vi är i CrouchState)
         if (anim != null) 
@@ -111,9 +117,28 @@ public partial class PlayerStateManager : MonoBehaviour
             currentState.FixedUpdateState(this);
         }
 
-        // 2. EXTRA KOD: "Bromsen"
-        // Om vi är på marken och spelaren INTE rör styrspaken/tangenterna
-        if (isGrounded && inputX == 0 && inputZ == 0)
+        // 2. NYTT: Logik för att flytta objektet vi drar (Höboll, stol, etc.)
+        if (currentDraggable != null)
+        {
+            // Beräkna målpositionen baserat på din nuvarande position + den sparade offsetten
+            Vector3 targetPos = transform.position + dragOffset;
+        
+            // Om objektet ska vara klistrat mot marken (Y-axeln)
+            if (currentDraggable.lockYAxis)
+            {
+                targetPos.y = initialObjectY;
+            }
+
+            // MovePosition är bäst för fysikobjekt – det gör att balen 
+            // stannar om den krockar med en vägg istället för att gå igenom den.
+            currentDraggable.rb.MovePosition(targetPos);
+        }
+
+        // 3. EXTRA KOD: "Bromsen"
+        // VIKTIGT: Vi lägger till "&& currentDraggable == null" i kontrollen.
+        // Om vi inte gör det kommer gubben att tvärstanna hela tiden 
+        // medan han försöker dra ett tungt objekt.
+        if (isGrounded && inputX == 0 && inputZ == 0 && currentDraggable == null)
         {
             // Vi behåller farten i Y (så vi fortfarande faller/landar rätt)
             // men vi sätter fart i X och Z till 0 så vi inte glider en millimeter.
@@ -195,6 +220,41 @@ public partial class PlayerStateManager : MonoBehaviour
             Physics.IgnoreCollision(this.col, itemCol, false);
         }
     }
+    
+    public void StartDragging(DraggableObject target)
+    {
+        currentDraggable = target;
+        
+        // Sparar offsetten precis som innan
+        dragOffset = target.transform.position - transform.position;
+        initialObjectY = target.transform.position.y;
+
+        // --- VIKTIGT: Gör den ICKE-kinematic när vi startar dragandet ---
+        // Det betyder att fysikmotorn nu lyssnar på vår flytt-kommandon
+        // och den känner av kollisioner (som bergsväggen).
+        currentDraggable.rb.isKinematic = false; 
+
+        // Sänk spelarens fart för viktkänsla
+        moveSpeed = originalSpeed * 0.5f;
+    }
+
+    void StopDragging()
+    {
+        if (currentDraggable != null)
+        {
+            // --- VIKTIGT: Gör den Kinematic igen precis när vi släpper ---
+            // Detta "låser" bollen på dess nuvarande position. 
+            // Den står blickstilla, känner inga knuffar och känner inte tyngdlagen.
+            // Perfekt för stapling!
+            currentDraggable.rb.isKinematic = true; 
+
+            currentDraggable = null;
+            moveSpeed = originalSpeed; // Återställ spelarens fart
+        }
+    }
+    
+    
+    
 
     void OnDrawGizmos()
     {
