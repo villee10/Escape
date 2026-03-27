@@ -4,44 +4,60 @@ using System.Collections.Generic;
 public class CameraVisionFixer : MonoBehaviour
 {
     [Header("Referenser")]
-    public Transform player;          // Dra in din gubbe här
-    public LayerMask wallLayer;       // Välj lagret där dina väggar ligger
+    public Transform player;
+    public LayerMask wallLayer;
     
     [Header("Inställningar")]
-    public float sphereRadius = 0.5f; // Hur bred "lasern" är. Justera om för många/få väggar försvinner.
+    public float sphereRadius = 0.5f;
+    [Tooltip("Max antal väggar som kan döljas samtidigt. Högre siffra = tyngre för CPU.")]
+    public int maxHits = 10; 
     
     private List<Renderer> currentlyHiddenWalls = new List<Renderer>();
+    private RaycastHit[] hitBuffer; // Här sparar vi träffarna utan att skapa nytt minne
+
+    void Start()
+    {
+        // Vi skapar "lådan" för träffar en gång i början
+        hitBuffer = new RaycastHit[maxHits];
+    }
 
     void Update()
     {
-        // 1. Återställ gamla väggar (Gör dem synliga igen)
-        // Detta är den viktigaste delen! När gubben går, måste de gamla väggarna komma tillbaka.
-        foreach (var wall in currentlyHiddenWalls)
+        // Kör var 5:e frame för att spara kraft
+        if (Time.frameCount % 5 != 0 || player == null) return;
+
+        // 1. Återställ gamla väggar
+        for (int i = 0; i < currentlyHiddenWalls.Count; i++)
         {
-            if (wall != null)
-            {
-                wall.enabled = true; // Slår på bilden (visar väggen)
-            }
+            if (currentlyHiddenWalls[i] != null)
+                currentlyHiddenWalls[i].enabled = true;
         }
         currentlyHiddenWalls.Clear();
 
-        // 2. Skjut strålen (en "SphereCast") från kameran till gubben
-        Vector3 direction = player.position - transform.position;
-        float distance = Vector3.Distance(transform.position, player.position);
-        
-        // Vi använder SphereCastAll för att hitta ALLA väggar som skymmer
-        RaycastHit[] hits = Physics.SphereCastAll(transform.position, sphereRadius, direction, distance, wallLayer);
+        // 2. Skjut strålen med NonAlloc
+        Vector3 origin = transform.position;
+        Vector3 targetPos = player.position + Vector3.up * 1.2f;
+        Vector3 direction = targetPos - origin;
+        float distance = direction.magnitude;
 
-        foreach (var hit in hits)
+        // Physics.SphereCastNonAlloc returnerar ANTALET träffar istället för en hel lista
+        int numHits = Physics.SphereCastNonAlloc(origin, sphereRadius, direction.normalized, hitBuffer, distance, wallLayer);
+
+        for (int i = 0; i < numHits; i++)
         {
-            // Vi vill bara dölja saker som har en Renderer (en bild)
-            Renderer wallRender = hit.collider.GetComponent<Renderer>();
+            RaycastHit hit = hitBuffer[i];
             
-            // Om den har en bild och INTE är gubben (bara för säkerhets skull)
+            // Försök hitta renderaren (leta först på objektet, sen i barnen)
+            Renderer wallRender = hit.collider.GetComponent<Renderer>();
+            if (wallRender == null) wallRender = hit.collider.GetComponentInChildren<Renderer>();
+
             if (wallRender != null && hit.collider.transform != player)
             {
-                currentlyHiddenWalls.Add(wallRender);
-                wallRender.enabled = false; // Slår av bilden (väggen försvinner helt!)
+                if (!currentlyHiddenWalls.Contains(wallRender))
+                {
+                    currentlyHiddenWalls.Add(wallRender);
+                    wallRender.enabled = false;
+                }
             }
         }
     }
