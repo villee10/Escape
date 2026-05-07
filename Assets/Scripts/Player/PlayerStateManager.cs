@@ -9,9 +9,17 @@ public partial class PlayerStateManager : MonoBehaviour
     public PlayerJumpState JumpState = new PlayerJumpState();
     public PlayerCrouchState CrouchState = new PlayerCrouchState();
     
+    [Header("Cutscene Mode")]
+    public bool isInCutscene = false; // Styrs från dina Intro/Bridge skript
+    
     [Header("Holding")]
     public Transform handTransform; 
     public GameObject currentlyHeldItem;
+    
+    [Header("Dragging")]
+    private DraggableObject currentDraggable; 
+    private Vector3 dragOffset;
+    private float initialObjectY;
     
     [Header("Interaktion")]
     public float interactionDistance = 2.5f; 
@@ -32,7 +40,7 @@ public partial class PlayerStateManager : MonoBehaviour
     public bool isGrounded;
 
     [Header("Referenser")]
-    public Transform characterTransform; // Se till att detta är din modell, INTE objektet med BoxCollider
+    public Transform characterTransform; 
     [HideInInspector] public Rigidbody rb;
     [HideInInspector] public Animator anim;
     [HideInInspector] public CapsuleCollider col;
@@ -41,7 +49,7 @@ public partial class PlayerStateManager : MonoBehaviour
     [HideInInspector] public Vector3 originalColliderSize;
     [HideInInspector] public Vector3 originalColliderCenter;
     public float inputX;
-    public  float inputZ;
+    public float inputZ;
 
     void Start()
     {
@@ -49,7 +57,6 @@ public partial class PlayerStateManager : MonoBehaviour
         anim = GetComponentInChildren<Animator>();
         col = GetComponent<CapsuleCollider>();
 
-        // 1. VIKTIGT: Sätt upp fysiken här i koden så den alltid är rätt
         if (rb != null) {
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
@@ -58,40 +65,50 @@ public partial class PlayerStateManager : MonoBehaviour
 
         originalSpeed = moveSpeed;
 
-        // 2. Spara värden för Capsule Collider
         if (col != null)
         {
             originalColliderSize = new Vector3(0, col.height, 0); 
             originalColliderCenter = col.center;
         }
 
-        // 3. DENNA RAD FATTADES (Starta motorn):
         currentState = IdleState;
         currentState.EnterState(this);
     }
 
     void Update()
     {
-        // 1. Buffra input (Detta tar bort jitter/skak i rörelsen)
+        // 0. STOPP VID CUTSCENE: Vi returnerar så att ingen input eller state-logik körs.
+        if (isInCutscene) return; 
+        
+        // 1. Hämta input
         inputX = Input.GetAxisRaw("Horizontal");
         inputZ = Input.GetAxisRaw("Vertical");
 
         // 2. Mark-kontroll
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
-        // 3. INTERAKTION (E-knappen)
-        if (Input.GetKeyDown(KeyCode.E)) CheckInteraction();
+        // 3. Räkna ut rörelsemängd
+        float moveInput = new Vector2(inputX, inputZ).magnitude;
 
-        // 4. ANIMATOR-SYNK (Gör att isCrouching blir true när vi är i CrouchState)
+        // 4. INTERAKTION
+        if (Input.GetKeyDown(KeyCode.E)) CheckInteraction();
+        if (Input.GetKeyUp(KeyCode.E)) StopDragging();
+
+        // 5. ANIMATOR-SYNK
         if (anim != null) 
         {
             anim.SetBool("isCrouching", currentState == CrouchState);
         }
 
-        // 5. STATE-BYTEN (Lägg tillbaka knappen för att faktiskt byta state!)
-        if (Input.GetKeyDown(KeyCode.C) && isGrounded && currentState != JumpState)
+        // 6. STATE-BYTEN
+        if (moveInput > 0.1f && currentState == IdleState)
         {
-            SwitchState(CrouchState); // Nu aktiveras logiken och animationen!
+            SwitchState(MoveState);
+        }
+
+        if (Input.GetKey(KeyCode.C) && isGrounded && currentState != JumpState)
+        {
+            if (currentState != CrouchState) SwitchState(CrouchState);
         }
 
         if (Input.GetButtonDown("Jump") && isGrounded && currentState != CrouchState)
@@ -99,29 +116,43 @@ public partial class PlayerStateManager : MonoBehaviour
             SwitchState(JumpState);
         }
 
-        // 6. Kör logiken för nuvarande tillstånd
+        // 7. Kör logik för nuvarande state
         currentState.UpdateState(this);
     }
 
     void FixedUpdate()
     {
-        // 1. Kör logiken för nuvarande tillstånd (Move, Jump osv)
+        // 0. CUTSCENE-SPÄRR: Tvingar gubben att stå stilla fysiskt men behåller gravitationen.
+        if (isInCutscene) 
+        {
+            if (rb != null)
+            {
+                // Vi nollar X och Z fart, men låter Y (gravitation) vara för att undvika att han svävar.
+                rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
+            }
+            return; 
+        }
+
+        // 1. Kör vanlig state-logik
         if (currentState != null)
         {
             currentState.FixedUpdateState(this);
         }
 
-        // 2. EXTRA KOD: "Bromsen"
-        // Om vi är på marken och spelaren INTE rör styrspaken/tangenterna
-        if (isGrounded && inputX == 0 && inputZ == 0)
+        // 2. Drag-logik
+        if (currentDraggable != null)
         {
-            // Vi behåller farten i Y (så vi fortfarande faller/landar rätt)
-            // men vi sätter fart i X och Z till 0 så vi inte glider en millimeter.
+            Vector3 targetPos = transform.position + dragOffset;
+            if (currentDraggable.lockYAxis) targetPos.y = initialObjectY;
+            currentDraggable.rb.MovePosition(targetPos);
+        }
+
+        // 3. Broms vid stillastående
+        if (isGrounded && inputX == 0 && inputZ == 0 && currentDraggable == null)
+        {
             rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
         }
     }
-
-   
 
     public void SwitchState(PlayerBaseState state)
     {
@@ -156,16 +187,12 @@ public partial class PlayerStateManager : MonoBehaviour
             }
         }
 
-        if (closestInteractable != null)
-        {
-            closestInteractable.Interact();
-        }
+        if (closestInteractable != null) closestInteractable.Interact();
     }
 
     public void DropItem()
     {
         if (currentlyHeldItem == null) return;
-
         currentlyHeldItem.transform.SetParent(null);
     
         Rigidbody itemRb = currentlyHeldItem.GetComponent<Rigidbody>();
@@ -183,28 +210,31 @@ public partial class PlayerStateManager : MonoBehaviour
             Physics.IgnoreCollision(this.col, itemCol, true);
             StartCoroutine(ReEnableCollision(itemCol));
         }
-
         currentlyHeldItem = null;
     }
 
     System.Collections.IEnumerator ReEnableCollision(Collider itemCol)
     {
         yield return new WaitForSeconds(0.5f);
-        if (itemCol != null && this.col != null)
-        {
-            Physics.IgnoreCollision(this.col, itemCol, false);
-        }
+        if (itemCol != null && this.col != null) Physics.IgnoreCollision(this.col, itemCol, false);
+    }
+    
+    public void StartDragging(DraggableObject target)
+    {
+        currentDraggable = target;
+        dragOffset = target.transform.position - transform.position;
+        initialObjectY = target.transform.position.y;
+        currentDraggable.rb.isKinematic = false; 
+        moveSpeed = originalSpeed * 0.5f;
     }
 
-    void OnDrawGizmos()
+    void StopDragging()
     {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, interactionDistance);
-
-        if (groundCheck != null)
+        if (currentDraggable != null)
         {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(groundCheck.position, groundDistance);
+            currentDraggable.rb.isKinematic = true; 
+            currentDraggable = null;
+            moveSpeed = originalSpeed; 
         }
     }
 }

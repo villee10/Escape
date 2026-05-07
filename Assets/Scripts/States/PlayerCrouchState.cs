@@ -17,29 +17,26 @@ public class PlayerCrouchState : PlayerBaseState
 
     public override void UpdateState(PlayerStateManager player)
     {
-        // 3. Skicka data till animationer (Använd Managerns sparade input!)
         player.anim.SetFloat("moveX", player.inputX);
         player.anim.SetFloat("moveY", player.inputZ);
 
-        // 4. TAK-CHECK (Physics.CheckSphere)
-        // Vi kollar om det är något ovanför gubbens huvud
-        Vector3 headPosition = player.transform.position + Vector3.up * (player.originalColliderSize.y * 0.8f);
-        bool isCeilingAbove = Physics.CheckSphere(headPosition, 0.3f, player.groundMask);
-
-        // 5. LOGIK FÖR ATT SLUTA CROUCHA
-        if (!Input.GetKey(KeyCode.C)) // Om vi släpper knappen...
+        // Enkel logik: Släpp C = Res dig upp direkt
+        if (!Input.GetKey(KeyCode.C)) 
         {
-            if (!isCeilingAbove) // ...och inget är i vägen ovanför...
-            {
-                // Återställ collidern innan vi byter state
-                player.col.height = player.originalColliderSize.y;
-                player.col.center = player.originalColliderCenter;
-                player.moveSpeed = player.originalSpeed;
-
-                // Gå till Idle (Managern sköter om vi ska gå direkt till Move därifrån)
-                player.SwitchState(player.IdleState);
-            }
+            ResetCrouch(player);
         }
+    }
+
+    void ResetCrouch(PlayerStateManager player)
+    {
+        player.col.height = player.originalColliderSize.y;
+        player.col.center = player.originalColliderCenter;
+        player.moveSpeed = player.originalSpeed;
+        
+        // Vi tvingar animatorn att fatta att vi slutar croucha
+        player.anim.SetBool("isCrouching", false);
+        
+        player.SwitchState(player.IdleState);
     }
 
     public override void FixedUpdateState(PlayerStateManager player)

@@ -4,109 +4,102 @@ using UnityEngine.SceneManagement;
 
 public class GuardAI : MonoBehaviour
 {
-    public enum GuardState { Idle, Patrolling, Chasing }
-    [Header("State")]
-    public GuardState currentState = GuardState.Idle; 
+    public enum GuardState
+    {
+        Idle,
+        Patrolling,
+        Chasing
+    }
 
-    [Header("References")]
-    public Animator anim; 
+    [Header("State")] public GuardState currentState = GuardState.Idle;
+
+    [Header("References")] public Animator anim;
     public Transform player;
     private NavMeshAgent agent;
 
-    [Header("Movement Settings")]
-    public float patrolSpeed = 2f;
+    [Header("Movement Settings")] public float patrolSpeed = 2f;
     public float chaseSpeed = 4f;
 
-    [Header("Bridge / Limit")]
-    public Transform bridgePoint; 
-    public float stopAtBridgeDistance = 4.0f; 
-    public Transform pointA; 
-    public Transform pointB; 
+    [Header("Patrol Points")] public Transform pointA;
+    public Transform pointB;
     private Transform targetPoint;
 
-    [Header("Vision")]
-    public float viewDistance = 50f; // Du nämnde att du ville ha 50 här
+    [Header("Vision")] public float viewDistance = 50f;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        
-        // Om du kör 2D-look i 3D space, behåll dessa. 
-        // Om det är ren 3D, kan du behöva sätta dem till true.
-        agent.updateRotation = false; 
+        agent.updateRotation = false;
         agent.updateUpAxis = false;
 
         if (anim == null) anim = GetComponentInChildren<Animator>();
-        
-        // Hitta spelaren automatiskt om den inte är tilldelad
-        if (player == null) 
+
+        if (player == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-            if(playerObj != null) player = playerObj.transform;
+            if (playerObj != null) player = playerObj.transform;
         }
-        
+
         targetPoint = pointA;
     }
 
-    public void StartChase() 
+    public void StartChase()
     {
         currentState = GuardState.Chasing;
     }
 
     void Update()
     {
-        if (player == null) return;
-
-        UpdateAnimations();
-
-        // --- 1. KOLLA BRON (DÖDAR FIENDEN) ---
-        if (bridgePoint != null)
-        {
-            float distToBridge = Vector3.Distance(transform.position, bridgePoint.position);
-            if (distToBridge < stopAtBridgeDistance)
+        
+            if (agent == null || !agent.enabled || !agent.isOnNavMesh)
             {
-                Debug.Log(gameObject.name + " nådde bron och togs bort.");
-                Destroy(gameObject);
-                return; 
+                // tvingar parametrarna till 0 här inne också, 
+                // så UpdateAnimations inte kan "ångra" det.
+                Animator anim = GetComponentInChildren<Animator>();
+                if (anim != null)
+                {
+                    anim.SetFloat("Speed", 0);
+                    anim.SetFloat("moveX", 0);
+                    anim.SetFloat("moveY", 0);
+                }
+                return; // VIKTIGT: Kör INTE UpdateAnimations() här
             }
-        }
+
+            if (player == null) return;
+            UpdateAnimations(); // Denna körs nu BARA när agenten är aktiv
+    
+            // ... resten av koden ...
+        
 
         if (currentState == GuardState.Idle) return;
 
-        // --- 2. LOGIK FÖR JAKT OCH PATRULL ---
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
         if (currentState == GuardState.Chasing)
         {
-            // Ökad sökradie (10.0f) ifall spelaren hoppar eller är på en plattform
             NavMeshHit hit;
             if (NavMesh.SamplePosition(player.position, out hit, 10.0f, NavMesh.AllAreas))
             {
                 agent.SetDestination(hit.position);
             }
-            
+
             agent.speed = chaseSpeed;
 
-            // Om spelaren kommer VÄLDIGT långt bort (t.ex. 10 meter utanför synfältet), sluta jaga
-            if (distanceToPlayer > viewDistance + 10f) 
+            if (distanceToPlayer > viewDistance + 10f)
             {
                 currentState = GuardState.Patrolling;
             }
         }
-        else // Patrull-läge
+        else
         {
             Patrol();
-
-            // Om spelaren kommer inom synhåll, börja jaga
             if (distanceToPlayer < viewDistance)
             {
                 currentState = GuardState.Chasing;
             }
         }
 
-        // --- 3. KOLLA OM SPELAREN ÄR FÅNGAD ---
-        // Vi kollar bara detta om vi faktiskt jagar
-        if (currentState == GuardState.Chasing && distanceToPlayer < 1.2f) 
+        if (currentState == GuardState.Chasing && distanceToPlayer < 1.2f)
         {
             CaughtPlayer();
         }
@@ -115,11 +108,8 @@ public class GuardAI : MonoBehaviour
     void Patrol()
     {
         if (pointA == null || pointB == null) return;
-        
         agent.speed = patrolSpeed;
         agent.SetDestination(targetPoint.position);
-
-        // Byt målpunkt när vi är nära
         if (!agent.pathPending && agent.remainingDistance < 0.6f)
         {
             targetPoint = (targetPoint == pointA) ? pointB : pointA;
@@ -129,17 +119,39 @@ public class GuardAI : MonoBehaviour
     void UpdateAnimations()
     {
         if (anim == null) return;
-        Vector3 velocity = agent.velocity;
-        
-        // I 2D/Top-down används ofta X och Y. I 3D är det X och Z.
-        anim.SetFloat("moveX", velocity.x);
-        anim.SetFloat("moveY", velocity.z); 
-        anim.SetFloat("speed", velocity.magnitude);
+    
+        // velocity.normalized gör att värdena alltid håller sig mellan -1 och 1
+        // Vi kollar om agenten faktiskt rör sig för att inte nollställa riktningen när han stannar
+        if (agent.velocity.magnitude > 0.1f)
+        {
+            Vector3 direction = agent.velocity.normalized;
+            anim.SetFloat("moveX", direction.x);
+            anim.SetFloat("moveY", direction.z); // .z är viktigt i 3D!
+        }
+    
+        anim.SetFloat("speed", agent.velocity.magnitude);
     }
 
-    void CaughtPlayer() 
-    { 
-        Debug.Log("Spelaren fångad!");
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name); 
+    void CaughtPlayer()
+    {
+        // Istället för att ladda om scenen, anropar vi en reset-funktion på spelaren
+        CheckpointManager cpManager = player.GetComponent<CheckpointManager>();
+
+        if (cpManager != null && CheckpointManager.hasReachedCheckpoint)
+        {
+            // Flytta spelaren direkt utan att ladda om scenen
+            player.position = CheckpointManager.lastCheckPointPos;
+
+            // Stoppa farten så han inte fortsätter springa in i vakten
+            Rigidbody rb = player.GetComponent<Rigidbody>();
+            if (rb != null) rb.linearVelocity = Vector3.zero;
+
+            Debug.Log("Spelaren fångad! Teleporterar till checkpoint.");
+        }
+        else
+        {
+            // Om ingen checkpoint finns, ladda om scenen som vanligt
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
     }
 }

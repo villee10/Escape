@@ -3,14 +3,19 @@ using UnityEngine;
 public class PlayerMoveState : PlayerBaseState
 {
     public override void EnterState(PlayerStateManager player) { }
+    
+    
 
     public override void UpdateState(PlayerStateManager player)
     {
-        // 1. SPRINT-LOGIK (Behålls i Update för snabb respons)
-        player.moveSpeed = Input.GetKey(KeyCode.LeftShift) ? player.sprintSpeed : player.originalSpeed;
+        // 1. SPRINT-LOGIK 
+        bool isShiftPressed = Input.GetKey(KeyCode.LeftShift);
+        player.moveSpeed = isShiftPressed ? player.sprintSpeed : player.originalSpeed;
+
+      
+        player.anim.SetBool("isRunning", isShiftPressed);
 
         // 2. SKICKA DATA TILL ANIMATIONERNA
-        // Vi använder player.inputX som vi nu sparar i managern!
         player.anim.SetFloat("moveX", player.inputX);
         player.anim.SetFloat("moveY", player.inputZ);
 
