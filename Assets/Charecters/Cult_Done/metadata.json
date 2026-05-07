@@ -1,0 +1,171 @@
+{
+  "character": {
+    "id": "55602fa9-814d-484b-bb1a-f3ea31c8cf44",
+    "name": "I want a sect member. I want him to have a red symbol on his cape with a hood. the cape can be black.. and the hood should cover most of the part of his head. I want mostly to see his eyes",
+    "prompt": "I want a sect member. I want him to have a red symbol on his cape with a hood. the cape can be black.. and the hood should cover most of the part of his head. I want mostly to see his eyes",
+    "size": {
+      "width": 80,
+      "height": 80
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-04-27T19:51:20.72071+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {
+      "animation-1fd57523": {
+        "west": [
+          "animations/animation-1fd57523/west/frame_000.png",
+          "animations/animation-1fd57523/west/frame_001.png",
+          "animations/animation-1fd57523/west/frame_002.png",
+          "animations/animation-1fd57523/west/frame_003.png",
+          "animations/animation-1fd57523/west/frame_004.png",
+          "animations/animation-1fd57523/west/frame_005.png"
+        ],
+        "east": [
+          "animations/animation-1fd57523/east/frame_000.png",
+          "animations/animation-1fd57523/east/frame_001.png",
+          "animations/animation-1fd57523/east/frame_002.png",
+          "animations/animation-1fd57523/east/frame_003.png",
+          "animations/animation-1fd57523/east/frame_004.png",
+          "animations/animation-1fd57523/east/frame_005.png"
+        ],
+        "south-east": [
+          "animations/animation-1fd57523/south-east/frame_000.png",
+          "animations/animation-1fd57523/south-east/frame_001.png",
+          "animations/animation-1fd57523/south-east/frame_002.png",
+          "animations/animation-1fd57523/south-east/frame_003.png",
+          "animations/animation-1fd57523/south-east/frame_004.png",
+          "animations/animation-1fd57523/south-east/frame_005.png"
+        ],
+        "south": [
+          "animations/animation-1fd57523/south/frame_000.png",
+          "animations/animation-1fd57523/south/frame_001.png",
+          "animations/animation-1fd57523/south/frame_002.png",
+          "animations/animation-1fd57523/south/frame_003.png",
+          "animations/animation-1fd57523/south/frame_004.png",
+          "animations/animation-1fd57523/south/frame_005.png"
+        ],
+        "north": [
+          "animations/animation-1fd57523/north/frame_000.png",
+          "animations/animation-1fd57523/north/frame_001.png",
+          "animations/animation-1fd57523/north/frame_002.png",
+          "animations/animation-1fd57523/north/frame_003.png",
+          "animations/animation-1fd57523/north/frame_004.png",
+          "animations/animation-1fd57523/north/frame_005.png"
+        ],
+        "north-east": [
+          "animations/animation-1fd57523/north-east/frame_000.png",
+          "animations/animation-1fd57523/north-east/frame_001.png",
+          "animations/animation-1fd57523/north-east/frame_002.png",
+          "animations/animation-1fd57523/north-east/frame_003.png",
+          "animations/animation-1fd57523/north-east/frame_004.png",
+          "animations/animation-1fd57523/north-east/frame_005.png"
+        ],
+        "south-west": [
+          "animations/animation-1fd57523/south-west/frame_000.png",
+          "animations/animation-1fd57523/south-west/frame_001.png",
+          "animations/animation-1fd57523/south-west/frame_002.png",
+          "animations/animation-1fd57523/south-west/frame_003.png",
+          "animations/animation-1fd57523/south-west/frame_004.png",
+          "animations/animation-1fd57523/south-west/frame_005.png"
+        ],
+        "north-west": [
+          "animations/animation-1fd57523/north-west/frame_000.png",
+          "animations/animation-1fd57523/north-west/frame_001.png",
+          "animations/animation-1fd57523/north-west/frame_002.png",
+          "animations/animation-1fd57523/north-west/frame_003.png",
+          "animations/animation-1fd57523/north-west/frame_004.png",
+          "animations/animation-1fd57523/north-west/frame_005.png"
+        ]
+      },
+      "Breathing_Idle-0082cc26": {
+        "south": [
+          "animations/Breathing_Idle-0082cc26/south/frame_000.png",
+          "animations/Breathing_Idle-0082cc26/south/frame_001.png",
+          "animations/Breathing_Idle-0082cc26/south/frame_002.png",
+          "animations/Breathing_Idle-0082cc26/south/frame_003.png"
+        ]
+      },
+      "Running-10db605c": {
+        "south": [
+          "animations/Running-10db605c/south/frame_000.png",
+          "animations/Running-10db605c/south/frame_001.png",
+          "animations/Running-10db605c/south/frame_002.png",
+          "animations/Running-10db605c/south/frame_003.png",
+          "animations/Running-10db605c/south/frame_004.png",
+          "animations/Running-10db605c/south/frame_005.png"
+        ],
+        "south-east": [
+          "animations/Running-10db605c/south-east/frame_000.png",
+          "animations/Running-10db605c/south-east/frame_001.png",
+          "animations/Running-10db605c/south-east/frame_002.png",
+          "animations/Running-10db605c/south-east/frame_003.png",
+          "animations/Running-10db605c/south-east/frame_004.png",
+          "animations/Running-10db605c/south-east/frame_005.png"
+        ],
+        "south-west": [
+          "animations/Running-10db605c/south-west/frame_000.png",
+          "animations/Running-10db605c/south-west/frame_001.png",
+          "animations/Running-10db605c/south-west/frame_002.png",
+          "animations/Running-10db605c/south-west/frame_003.png",
+          "animations/Running-10db605c/south-west/frame_004.png",
+          "animations/Running-10db605c/south-west/frame_005.png"
+        ],
+        "west": [
+          "animations/Running-10db605c/west/frame_000.png",
+          "animations/Running-10db605c/west/frame_001.png",
+          "animations/Running-10db605c/west/frame_002.png",
+          "animations/Running-10db605c/west/frame_003.png",
+          "animations/Running-10db605c/west/frame_004.png",
+          "animations/Running-10db605c/west/frame_005.png"
+        ],
+        "east": [
+          "animations/Running-10db605c/east/frame_000.png",
+          "animations/Running-10db605c/east/frame_001.png",
+          "animations/Running-10db605c/east/frame_002.png",
+          "animations/Running-10db605c/east/frame_003.png",
+          "animations/Running-10db605c/east/frame_004.png",
+          "animations/Running-10db605c/east/frame_005.png"
+        ],
+        "north-east": [
+          "animations/Running-10db605c/north-east/frame_000.png",
+          "animations/Running-10db605c/north-east/frame_001.png",
+          "animations/Running-10db605c/north-east/frame_002.png",
+          "animations/Running-10db605c/north-east/frame_003.png",
+          "animations/Running-10db605c/north-east/frame_004.png",
+          "animations/Running-10db605c/north-east/frame_005.png"
+        ],
+        "north-west": [
+          "animations/Running-10db605c/north-west/frame_000.png",
+          "animations/Running-10db605c/north-west/frame_001.png",
+          "animations/Running-10db605c/north-west/frame_002.png",
+          "animations/Running-10db605c/north-west/frame_003.png",
+          "animations/Running-10db605c/north-west/frame_004.png",
+          "animations/Running-10db605c/north-west/frame_005.png"
+        ],
+        "north": [
+          "animations/Running-10db605c/north/frame_000.png",
+          "animations/Running-10db605c/north/frame_001.png",
+          "animations/Running-10db605c/north/frame_002.png",
+          "animations/Running-10db605c/north/frame_003.png",
+          "animations/Running-10db605c/north/frame_004.png",
+          "animations/Running-10db605c/north/frame_005.png"
+        ]
+      }
+    }
+  },
+  "export_version": "2.0",
+  "export_date": "2026-04-28T11:13:17.129230"
+}

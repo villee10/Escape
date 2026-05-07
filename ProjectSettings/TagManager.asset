@@ -16,9 +16,9 @@ TagManager:
   - Ground
   - Interactable
   - Ground2
-  - 
-  - 
-  - 
+  - Walls
+  - Guard
+  - Player
   - 
   - 
   - 
