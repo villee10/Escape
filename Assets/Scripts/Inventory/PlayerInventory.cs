@@ -25,20 +25,36 @@ public class PlayerInventory : MonoBehaviour
     private GameObject currentItemInHand; // Håller koll på vad vi håller just nu
     
     
+    
+    public GameObject hotbarParent; 
     private int selectedSlotIndex = 0;
     
     private bool isOpen = false;
 
     void Start()
     {
+        // 1. Göm stora inventory-panelen som vanligt
         if (inventoryPanel != null)
             inventoryPanel.SetActive(false);
-        
+    
+        // 2. Hantera Hotbaren baserat på om vi nått en checkpoint
+        if (hotbarParent != null)
+        {
+            // Om jag HAR nått en checkpoint (t.ex. vid respawn), visa hotbaren.
+            // Annars (när spelet precis startat), håll den gömd.
+            hotbarParent.SetActive(CheckpointManager.hasReachedCheckpoint);
+        }
+
+        // 3. Sätt första slotten som vald
         ChangeSelectedSlot(0);
     }
 
     void Update()
     {
+        // Om hotbaren är gömd, gör ingenting av det nedanför. 
+        // Det förhindrar att man råkar byta föremål innan man nått bron.
+        if (hotbarParent != null && !hotbarParent.activeSelf) return;
+
         if (inventoryGoldText != null)
         {
             inventoryGoldText.text = "Guld: " + gold.ToString();
@@ -49,6 +65,7 @@ public class PlayerInventory : MonoBehaviour
             ToggleInventory();
         }
 
+        // Dessa körs nu bara om hotbaren faktiskt syns på skärmen
         if (Input.GetKeyDown(KeyCode.Alpha1)) ChangeSelectedSlot(0);
         if (Input.GetKeyDown(KeyCode.Alpha2)) ChangeSelectedSlot(1);
         if (Input.GetKeyDown(KeyCode.Alpha3)) ChangeSelectedSlot(2);
