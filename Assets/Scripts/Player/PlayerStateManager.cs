@@ -15,6 +15,7 @@ public partial class PlayerStateManager : MonoBehaviour
     [Header("Holding")]
     public Transform handTransform; 
     public GameObject currentlyHeldItem;
+    public float handZOffset = 0.1f; // Hur mycket handen ska flyttas (0.1 brukar räcka)
     
     [Header("Dragging")]
     private DraggableObject currentDraggable; 
@@ -79,10 +80,13 @@ public partial class PlayerStateManager : MonoBehaviour
     {
         // 0. STOPP VID CUTSCENE: Vi returnerar så att ingen input eller state-logik körs.
         if (isInCutscene) return; 
-        
+    
         // 1. Hämta input
         inputX = Input.GetAxisRaw("Horizontal");
         inputZ = Input.GetAxisRaw("Vertical");
+
+        // --- NYTT: Justera djupet på handen baserat på riktning ---
+        UpdateHandDepth(); 
 
         // 2. Mark-kontroll
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
@@ -235,6 +239,29 @@ public partial class PlayerStateManager : MonoBehaviour
             currentDraggable.rb.isKinematic = true; 
             currentDraggable = null;
             moveSpeed = originalSpeed; 
+        }
+    }
+    
+    
+    void UpdateHandDepth()
+    {
+        if (handTransform == null) return;
+
+        SpriteRenderer itemRenderer = handTransform.GetComponentInChildren<SpriteRenderer>();
+        if (itemRenderer == null) return;
+
+        // 1. Går han UPPÅT? (inputZ > 0.1) -> Hamna BAKOM
+        // 2. Går han åt VÄNSTER? (inputX < -0.1) -> Hamna BAKOM
+        if (inputZ > 0.1f || inputX < -0.1f)
+        {
+            itemRenderer.sortingOrder = -1; // Lägre än spelaren (0)
+            handTransform.localPosition = new Vector3(handTransform.localPosition.x, handTransform.localPosition.y, 0.1f);
+        }
+        // 3. Går han neråt, höger eller står stilla? -> Hamna FRAMFÖR
+        else
+        {
+            itemRenderer.sortingOrder = 1; // Högre än spelaren (0)
+            handTransform.localPosition = new Vector3(handTransform.localPosition.x, handTransform.localPosition.y, -0.1f);
         }
     }
 }

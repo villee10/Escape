@@ -15911,7 +15911,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.17364816, y: 0, z: 0, w: 0.9848078}
-  m_LocalPosition: {x: 26.44, y: 11.99, z: -12.04}
+  m_LocalPosition: {x: 25.49, y: 12.54, z: -12.04}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18487,7 +18487,7 @@ Transform:
   m_GameObject: {fileID: 394277598}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 26.44, y: 7.99, z: -2.04}
+  m_LocalPosition: {x: 25.49, y: 8.54, z: -2.04}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -18509,6 +18509,7 @@ MonoBehaviour:
   isInCutscene: 0
   handTransform: {fileID: 613877351}
   currentlyHeldItem: {fileID: 0}
+  handZOffset: 0.1
   interactionDistance: 1
   interactableMask:
     serializedVersion: 2
@@ -57024,7 +57025,7 @@ Transform:
   m_GameObject: {fileID: 1232794908}
   serializedVersion: 2
   m_LocalRotation: {x: 0.17364816, y: 0, z: 0, w: 0.9848078}
-  m_LocalPosition: {x: 26.44, y: 11.99, z: -12.04}
+  m_LocalPosition: {x: 25.49, y: 12.54, z: -12.04}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
