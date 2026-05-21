@@ -30,7 +30,9 @@ public class GuardAI : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         agent.updateRotation = false;
-        agent.updateUpAxis = false;
+        
+        // Denna är utkommenterad så han kan anpassa sin höjd efter terräng/trappor
+        // agent.updateUpAxis = false;
 
         if (anim == null) anim = GetComponentInChildren<Animator>();
 
@@ -50,39 +52,38 @@ public class GuardAI : MonoBehaviour
 
     void Update()
     {
-        
-            if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+        {
+            Animator anim = GetComponentInChildren<Animator>();
+            if (anim != null)
             {
-                // tvingar parametrarna till 0 här inne också, 
-                // så UpdateAnimations inte kan "ångra" det.
-                Animator anim = GetComponentInChildren<Animator>();
-                if (anim != null)
-                {
-                    anim.SetFloat("Speed", 0);
-                    anim.SetFloat("moveX", 0);
-                    anim.SetFloat("moveY", 0);
-                }
-                return; // VIKTIGT: Kör INTE UpdateAnimations() här
+                anim.SetFloat("speed", 0); 
+                anim.SetFloat("moveX", 0);
+                anim.SetFloat("moveY", 0);
             }
+            return; 
+        }
 
-            if (player == null) return;
-            UpdateAnimations(); // Denna körs nu BARA när agenten är aktiv
-    
-            // ... resten av koden ...
-        
+        if (player == null) return;
+        UpdateAnimations(); 
 
         if (currentState == GuardState.Idle) return;
 
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        // --- HÄR ÄR FIXEN FÖR HOVEDVÄRKEN (IGNORERA Y-AXELN) ---
+        Vector3 guardPos2D = new Vector3(transform.position.x, 0, transform.position.z);
+        Vector3 playerPos2D = new Vector3(player.position.x, 0, player.position.z);
+    
+        // Räknar ut avståndet helt platt längs marken
+        float distanceToPlayer = Vector3.Distance(guardPos2D, playerPos2D);
+        // ------------------------------------------------------
 
         if (currentState == GuardState.Chasing)
         {
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(player.position, out hit, 10.0f, NavMesh.AllAreas))
-            {
-                agent.SetDestination(hit.position);
-            }
-
+            // 1. Tvinga agenten att glömma sin gamla beräkning så han ALDRIG kan frysa fast
+            agent.ResetPath(); 
+    
+            // 2. Sätt målet rakt på din spelares position direkt
+            agent.SetDestination(player.position);
             agent.speed = chaseSpeed;
 
             if (distanceToPlayer > viewDistance + 10f)
@@ -98,7 +99,8 @@ public class GuardAI : MonoBehaviour
                 currentState = GuardState.Chasing;
             }
         }
-
+        
+        
         if (currentState == GuardState.Chasing && distanceToPlayer < 1.2f)
         {
             CaughtPlayer();
@@ -120,13 +122,11 @@ public class GuardAI : MonoBehaviour
     {
         if (anim == null) return;
     
-        // velocity.normalized gör att värdena alltid håller sig mellan -1 och 1
-        // Vi kollar om agenten faktiskt rör sig för att inte nollställa riktningen när han stannar
         if (agent.velocity.magnitude > 0.1f)
         {
             Vector3 direction = agent.velocity.normalized;
             anim.SetFloat("moveX", direction.x);
-            anim.SetFloat("moveY", direction.z); // .z är viktigt i 3D!
+            anim.SetFloat("moveY", direction.z); 
         }
     
         anim.SetFloat("speed", agent.velocity.magnitude);
@@ -134,15 +134,12 @@ public class GuardAI : MonoBehaviour
 
     void CaughtPlayer()
     {
-        // Istället för att ladda om scenen, anropar vi en reset-funktion på spelaren
         CheckpointManager cpManager = player.GetComponent<CheckpointManager>();
 
         if (cpManager != null && CheckpointManager.hasReachedCheckpoint)
         {
-            // Flytta spelaren direkt utan att ladda om scenen
             player.position = CheckpointManager.lastCheckPointPos;
 
-            // Stoppa farten så han inte fortsätter springa in i vakten
             Rigidbody rb = player.GetComponent<Rigidbody>();
             if (rb != null) rb.linearVelocity = Vector3.zero;
 
@@ -150,7 +147,6 @@ public class GuardAI : MonoBehaviour
         }
         else
         {
-            // Om ingen checkpoint finns, ladda om scenen som vanligt
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
