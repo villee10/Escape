@@ -1,6 +1,6 @@
 using UnityEngine;
-
-public class Key : MonoBehaviour, IInteractable
+//gamla key.cs
+public class PickupItem : MonoBehaviour, IInteractable
 {
     // Vi sparar din exakta skala här
     private Vector3 myProperScale = new Vector3(1.5127f, 1.5127f, 1.5127f);
